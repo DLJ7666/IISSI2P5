@@ -5,21 +5,35 @@ import { getAll } from '../../api/RestaurantEndpoints'
 import ImageCard from '../../components/ImageCard'
 import TextSemiBold from '../../components/TextSemibold'
 import TextRegular from '../../components/TextRegular'
-
+import { showMessage } from 'react-native-flash-message'
 import * as GlobalStyles from '../../styles/GlobalStyles'
 import restaurantLogo from '../../../assets/restaurantLogo.jpeg'
-
+import {AuthorizationContext} from '../../context/AuthorizationContext'
 
 export default function RestaurantsScreen ({ navigation }) {
   const [restaurants, setRestaurants] = useState([])
+  const { loggedInUser } = useContext(AuthorizationContext)
 
   useEffect(() => {
-    console.log('Loading restaurants, please wait 1 second')
-    setTimeout(() => {
-      setRestaurants(getAll) // getAll function has to be imported
-      console.log('Restaurants loaded')
-    }, 1000)
-  }, [])
+    async function fetchRestaurants () { 
+      try {
+        const fetchedRestaurants = await getAll()
+        setRestaurants(fetchedRestaurants)
+      } catch (error) { 
+        showMessage({
+          message: `There was an error while retrieving restaurants. ${error} `,
+          type: 'error',
+          style: GlobalStyles.flashStyle,
+          titleStyle: GlobalStyles.flashTextStyle
+        })
+      }
+    }
+    if (loggedInUser) { 
+      fetchRestaurants()
+    } else {
+      setRestaurants(null)
+    }
+  }, [loggedInUser])
 
   const renderRestaurant = ({ item }) => {
     return (
